@@ -1,4 +1,4 @@
-import { inArray, desc } from "drizzle-orm";
+import { inArray, desc, sql } from "drizzle-orm";
 import { dexTrade } from "./db/schema/Listener";
 import { types, db, App, middlewares } from "@duneanalytics/sim-idx"; // Import schema to ensure it's registered
 
@@ -9,7 +9,8 @@ const supportedChains: types.Uint[] = [
 const app = App.create();
 app.use("*", middlewares.authentication);
 
-app.get("/*", async (c) => {
+// Default route for backward compatibility
+app.get("/", async (c) => {
   try {
     const chainIdsParam = c.req.query("chainIds");
     let chainIds: types.Uint[];
@@ -31,6 +32,47 @@ app.get("/*", async (c) => {
 
     return Response.json({
       result: result,
+    });
+  } catch (e) {
+    console.error("Database operation failed:", e);
+    return Response.json({ error: (e as Error).message }, { status: 500 });
+  }
+});
+
+// New /lasttrades endpoint
+app.get("/lasttrades", async (c) => {
+  try {
+    const result = await db.client(c).execute(sql`
+      WITH norm AS (
+        SELECT
+          dex,
+          LEAST(from_token_symbol, to_token_symbol)  AS tok1,
+          GREATEST(from_token_symbol, to_token_symbol) AS tok2,
+          -- Map amounts to the sorted side:
+          CASE
+            WHEN from_token_symbol <= to_token_symbol THEN from_token_amt / POWER(10, from_token_decimals)
+            ELSE to_token_amt / POWER(10, to_token_decimals)
+          END AS amt1,
+          CASE
+            WHEN from_token_symbol <= to_token_symbol THEN to_token_amt / POWER(10, to_token_decimals)
+            ELSE from_token_amt / POWER(10, from_token_decimals)
+          END AS amt2
+        FROM dex_trade
+        WHERE block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes'))
+      )
+      SELECT
+        tok1 || '/' || tok2 AS token_pair,
+        COUNT(*) AS trade_count,
+        SUM(amt1) AS total_tok1_amt,
+        SUM(amt2) AS total_tok2_amt 
+      FROM norm
+      GROUP BY tok1, tok2
+      HAVING COUNT(*) > 10
+      ORDER BY trade_count DESC
+    `);
+
+    return Response.json({
+      result: result.rows,
     });
   } catch (e) {
     console.error("Database operation failed:", e);
