@@ -1,0 +1,47 @@
+
+# Import required libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# --- Static JSON data ---
+data = {
+    "result": [
+        {"token_pair": "ETH/USDC", "trade_count": 25, "total_tok1_amt": 12.5, "total_tok2_amt": 45000.0},
+        {"token_pair": "BTC/USDC", "trade_count": 40, "total_tok1_amt": 3.1, "total_tok2_amt": 180000.0},
+        {"token_pair": "ARB/ETH", "trade_count": 15, "total_tok1_amt": 1200, "total_tok2_amt": 9.2},
+        {"token_pair": "SOL/USDC", "trade_count": 32, "total_tok1_amt": 250, "total_tok2_amt": 35000.0},
+    ]
+}
+
+# --- Convert JSON to DataFrame ---
+df = pd.DataFrame(data["result"])
+display(df)
+
+# --- 1. Bar chart: Trade Count per Token Pair ---
+plt.figure(figsize=(8, 5))
+plt.bar(df["token_pair"], df["trade_count"], color="skyblue", edgecolor="black")
+plt.title("Trade Count per Token Pair", fontsize=14)
+plt.xlabel("Token Pair")
+plt.ylabel("Trade Count")
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.show()
+
+# --- 2. Bar chart: Total Token 2 Amount (e.g., USDC) ---
+plt.figure(figsize=(8, 5))
+plt.bar(df["token_pair"], df["total_tok2_amt"], color="orange", edgecolor="black")
+plt.title("Total Token 2 Amount per Pair", fontsize=14)
+plt.xlabel("Token Pair")
+plt.ylabel("Total Token 2 Amount")
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.show()
+
+# --- 3. Scatter plot: Token 1 vs Token 2 amounts ---
+plt.figure(figsize=(8, 5))
+plt.scatter(df["total_tok1_amt"], df["total_tok2_amt"], s=df["trade_count"] * 10, alpha=0.7, c="purple")
+for i, row in df.iterrows():
+    plt.text(row["total_tok1_amt"], row["total_tok2_amt"], row["token_pair"], fontsize=9)
+plt.title("Token 1 vs Token 2 Amounts", fontsize=14)
+plt.xlabel("Total Token 1 Amount")
+plt.ylabel("Total Token 2 Amount")
+plt.grid(True, linestyle="--", alpha=0.7)
+plt.show()
