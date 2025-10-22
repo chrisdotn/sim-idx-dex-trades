@@ -42,13 +42,6 @@ app.get("/", async (c) => {
 // New /lasttrades endpoint
 app.get("/lasttrades", async (c) => {
   try {
-    const minutesParam = c.req.query("minutes");
-    const minutes = minutesParam ? parseInt(minutesParam, 10) : 5;
-    
-    if (isNaN(minutes) || minutes <= 0) {
-      return Response.json({ error: "Invalid minutes parameter. Must be a positive number. " }, { status: 400 });
-    }
-
     const result = await db.client(c).execute(sql`
       WITH norm AS (
         SELECT
@@ -65,7 +58,7 @@ app.get("/lasttrades", async (c) => {
             ELSE from_token_amt / POWER(10, from_token_decimals)
           END AS amt2
         FROM dex_trade
-        WHERE block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '${minutes} minutes'))
+        WHERE block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes'))
       )
       SELECT
         tok1 || '/' || tok2 AS token_pair,
