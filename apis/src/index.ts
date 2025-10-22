@@ -46,7 +46,7 @@ app.get("/lasttrades", async (c) => {
     const minutes = minutesParam ? parseInt(minutesParam, 10) : 5;
     
     if (isNaN(minutes) || minutes <= 0) {
-      return Response.json({ error: "Invalid minutes parameter. Must be a positive number." }, { status: 400 });
+      return Response.json({ error: "Invalid minutes parameter. Must be a positive number. " }, { status: 400 });
     }
 
     const result = await db.client(c).execute(sql`
