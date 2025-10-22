@@ -42,13 +42,21 @@ app.get("/", async (c) => {
 // New /lasttrades endpoint
 app.get("/lasttrades", async (c) => {
   try {
+    // Get minTradeCount from query parameter, default to 10
+    const minTradeCountParam = c.req.query("minTradeCount");
+    const minTradeCount = minTradeCountParam ? parseInt(minTradeCountParam, 10) : 100;
+    
+    // Validate the parameter
+    if (isNaN(minTradeCount) || minTradeCount < 0) {
+      return Response.json({ error: "minTradeCount must be a non-negative number" }, { status: 400 });
+    }
+
     const result = await db.client(c).execute(sql`
       WITH norm AS (
         SELECT
           dex,
           LEAST(from_token_symbol, to_token_symbol)  AS tok1,
           GREATEST(from_token_symbol, to_token_symbol) AS tok2,
-          -- Map amounts to the sorted side:
           CASE
             WHEN from_token_symbol <= to_token_symbol THEN from_token_amt / POWER(10, from_token_decimals)
             ELSE to_token_amt / POWER(10, to_token_decimals)
@@ -67,7 +75,7 @@ app.get("/lasttrades", async (c) => {
         SUM(amt2) AS total_tok2_amt 
       FROM norm
       GROUP BY tok1, tok2
-      HAVING COUNT(*) > 10
+      HAVING COUNT(*) > ${minTradeCount}
       ORDER BY trade_count DESC
     `);
 
