@@ -66,47 +66,47 @@ app.get("/lasttrades", async (c) => {
     //   return Response.json({ error: "chainIds must be comma-separated valid numbers" }, { status: 400 });
     // }
 
-    // const result = await db.client(c).execute(sql`
-    //   WITH norm AS (
-    //     SELECT
-    //       dex,
-    //       LEAST(from_token_symbol, to_token_symbol)  AS tok1,
-    //       GREATEST(from_token_symbol, to_token_symbol) AS tok2,
-    //       CASE
-    //         WHEN from_token_symbol <= to_token_symbol THEN from_token
-    //         ELSE to_token
-    //       END AS token1,
-    //       CASE
-    //         WHEN from_token_symbol <= to_token_symbol THEN to_token
-    //         ELSE from_token
-    //       END AS token2,
-    //       CASE
-    //         WHEN from_token_symbol <= to_token_symbol THEN from_token_amt / POWER(10, from_token_decimals)
-    //         ELSE to_token_amt / POWER(10, to_token_decimals)
-    //       END AS amt1,
-    //       CASE
-    //         WHEN from_token_symbol <= to_token_symbol THEN to_token_amt / POWER(10, to_token_decimals)
-    //         ELSE from_token_amt / POWER(10, from_token_decimals)
-    //       END AS amt2
-    //     FROM dex_trade
-    //     WHERE block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes'))
-    //       and chain_id = 8453
-    //   )
-    //   SELECT
-    //     tok1 || '/' || tok2 AS token_pair,
-    //     token1,
-    //     token2,
-    //     COUNT(*) AS trade_count,
-    //     SUM(amt1) AS total_tok1_amt,
-    //     SUM(amt2) AS total_tok2_amt 
-    //   FROM norm
-    //   GROUP BY tok1, tok2, token1, token2
-    //   HAVING COUNT(*) > 100
-    //   ORDER BY trade_count DESC;
-    // `);
+    const result = await db.client(c).execute(sql`
+      WITH norm AS (
+        SELECT
+          dex,
+          LEAST(from_token_symbol, to_token_symbol)  AS tok1,
+          GREATEST(from_token_symbol, to_token_symbol) AS tok2,
+          CASE
+            WHEN from_token_symbol <= to_token_symbol THEN from_token
+            ELSE to_token
+          END AS token1,
+          CASE
+            WHEN from_token_symbol <= to_token_symbol THEN to_token
+            ELSE from_token
+          END AS token2,
+          CASE
+            WHEN from_token_symbol <= to_token_symbol THEN from_token_amt / POWER(10, from_token_decimals)
+            ELSE to_token_amt / POWER(10, to_token_decimals)
+          END AS amt1,
+          CASE
+            WHEN from_token_symbol <= to_token_symbol THEN to_token_amt / POWER(10, to_token_decimals)
+            ELSE from_token_amt / POWER(10, from_token_decimals)
+          END AS amt2
+        FROM dex_trade
+        WHERE block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes'))
+          and chain_id = 8453
+      )
+      SELECT
+        tok1 || '/' || tok2 AS token_pair,
+        token1,
+        token2,
+        COUNT(*) AS trade_count,
+        SUM(amt1) AS total_tok1_amt,
+        SUM(amt2) AS total_tok2_amt 
+      FROM norm
+      GROUP BY tok1, tok2, token1, token2
+      HAVING COUNT(*) > 100
+      ORDER BY trade_count DESC
+    `);
 
     const result = await db.client(c).execute(sql`
-      SELECT * FROM dex_trade WHERE chain_id = 8453 AND block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes')) LIMIT 100;
+      // SELECT * FROM dex_trade WHERE chain_id = 8453 AND block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes')) LIMIT 100;
     `);
 
     return Response.json({
