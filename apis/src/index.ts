@@ -105,9 +105,9 @@ app.get("/lasttrades", async (c) => {
       ORDER BY trade_count DESC
     `);
 
-    const result = await db.client(c).execute(sql`
-      // SELECT * FROM dex_trade WHERE chain_id = 8453 AND block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes')) LIMIT 100;
-    `);
+    // const result = await db.client(c).execute(sql`
+    //   // SELECT * FROM dex_trade WHERE chain_id = 8453 AND block_timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '5 minutes')) LIMIT 100;
+    // `);
 
     return Response.json({
       result: result.rows,
